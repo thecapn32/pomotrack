@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import ProjectForm from '$lib/components/ProjectForm.svelte';
+	import TaskForm from '$lib/components/TaskForm.svelte';
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 	import TabNavigation from '$lib/components/TabNavigation.svelte';
 	import FloatingActionButton from '$lib/components/FloatingActionButton.svelte';
@@ -8,13 +10,34 @@
 
 	import { projects } from '$lib/stores/projects.js';
 	import { currentTab } from '$lib/stores/navigation.js';
-	import type { NewProject, TabType } from '$lib/types.js';
+	import type { NewProject, NewTask, TabType } from '$lib/types.js';
+
+	// Initialize projects from database when component mounts
+	onMount(async () => {
+		console.log('Component mounted, initializing projects...');
+		try {
+			await projects.init();
+			console.log('Projects initialized successfully');
+		} catch (error) {
+			console.error('Failed to initialize projects:', error);
+		}
+	});
 
 	let showModal = false;
+	let showTaskModal = false;
+	let modalType: 'project' | 'task' = 'project';
+	let selectedProjectId = '';
+
 	let newProject: NewProject = {
 		name: '',
 		description: '',
 		color: '#3B82F6'
+	};
+
+	let newTask: NewTask = {
+		name: '',
+		description: '',
+		projectId: ''
 	};
 
 	function handleAddProject(project: NewProject) {
@@ -26,25 +49,64 @@
 		projects.remove(id);
 	}
 
+	function handleAddTask(task: NewTask) {
+		projects.addTask(task);
+		closeTaskModal();
+	}
+
+	function handleAddTaskToProject(projectId: string) {
+		selectedProjectId = projectId;
+		newTask.projectId = projectId;
+		showTaskModal = true;
+	}
+
+	function handleToggleTask(projectId: string, taskId: string) {
+		projects.toggleTask(projectId, taskId);
+	}
+
+	function handleDeleteTask(projectId: string, taskId: string) {
+		projects.removeTask(projectId, taskId);
+	}
+
 	function handleTabChange(tab: TabType) {
 		currentTab.setTab(tab);
 	}
 
 	function openModal() {
+		modalType = 'project';
 		showModal = true;
 	}
 
 	function closeModal() {
 		showModal = false;
-		resetForm();
+		resetProjectForm();
 	}
 
-	function resetForm() {
+	function closeTaskModal() {
+		showTaskModal = false;
+		resetTaskForm();
+	}
+
+	function resetProjectForm() {
 		newProject = {
 			name: '',
 			description: '',
 			color: '#3B82F6'
 		};
+	}
+
+	function resetTaskForm() {
+		newTask = {
+			name: '',
+			description: '',
+			projectId: ''
+		};
+		selectedProjectId = '';
+	}
+
+	function getProjectName(projectId: string): string {
+		const project = $projects.find(p => p.id === projectId);
+		return project?.name || '';
 	}
 </script>
 
@@ -67,7 +129,7 @@
 					<div>
 						<h3 class="text-lg font-medium text-gray-100 mb-4">Your Projects</h3>
 						{#each $projects as project (project.id)}
-							<ProjectCard {project} onDelete={handleDeleteProject} />
+							<ProjectCard {project} onDelete={handleDeleteProject} onAddTask={handleAddTaskToProject} onToggleTask={handleToggleTask} onDeleteTask={handleDeleteTask} />
 						{:else}
 							<EmptyState />
 						{/each}
@@ -93,5 +155,9 @@
 
 	<Modal show={showModal} title="Add New Project" onClose={closeModal}>
 		<ProjectForm project={newProject} onSubmit={handleAddProject} onCancel={closeModal} />
+	</Modal>
+
+	<Modal show={showTaskModal} title="Add New Task" onClose={closeTaskModal}>
+		<TaskForm task={newTask} onSubmit={handleAddTask} onCancel={closeTaskModal} projectName={getProjectName(selectedProjectId)} />
 	</Modal>
 </div>
