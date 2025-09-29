@@ -14,13 +14,14 @@
 		onTabChange(tab);
 	}
 
-	function getTabClasses(tab: TabType): string {
+	$: getTabClasses = (tab: TabType) => {
 		const baseClasses = 'pb-4 px-1 border-b-2 font-medium text-sm transition-colors';
 		const activeClasses = 'border-blue-400 text-blue-400';
 		const inactiveClasses = 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500';
 
-		return `${baseClasses} ${activeTab === tab ? activeClasses : inactiveClasses}`;
-	}
+		const isActive = activeTab === tab;
+		return `${baseClasses} ${isActive ? activeClasses : inactiveClasses}`;
+	};
 </script>
 
 <div class="bg-gray-800 rounded-t-lg shadow-sm border border-gray-700">

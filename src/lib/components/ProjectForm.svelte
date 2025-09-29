@@ -44,7 +44,7 @@
 	</div>
 
 	<div>
-		<label class="block text-sm font-medium text-gray-200 mb-3">
+		<label for="project-color-input" class="block text-sm font-medium text-gray-200 mb-3">
 			Project Color
 		</label>
 		<div class="flex items-center space-x-4">
@@ -53,6 +53,7 @@
 				class="w-12 h-12 rounded-full border-3 border-gray-600 cursor-pointer hover:border-gray-500 hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
 				style="background-color: {project.color}"
 				title="Click to change color"
+				aria-label="Change project color"
 				on:click={openColorPicker}
 			></button>
 			<input

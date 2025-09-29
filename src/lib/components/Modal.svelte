@@ -6,12 +6,17 @@
 	export let title: string = '';
 	export let onClose: () => void;
 
-	function handleBackdropClick() {
-		onClose();
+	function handleBackdropClick(event: Event) {
+		if (event.target === event.currentTarget) {
+			onClose();
+		}
 	}
 
-	function handleContentClick(event: Event) {
-		event.stopPropagation();
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			onClose();
+		}
 	}
 </script>
 
@@ -20,14 +25,16 @@
 		class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-md flex items-center justify-center p-4 z-50"
 		transition:fade={{ duration: 200 }}
 		on:click={handleBackdropClick}
+		on:keydown={handleKeydown}
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="modal-title"
+		tabindex="-1"
 	>
 		<div
 			class="bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-700"
 			transition:scale={{ duration: 200, start: 0.9, easing: quintOut }}
-			on:click={handleContentClick}
+			role="document"
 		>
 			<div class="flex justify-between items-center mb-6">
 				<h3 id="modal-title" class="text-xl font-semibold text-gray-100">{title}</h3>
