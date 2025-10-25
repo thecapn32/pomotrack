@@ -7,6 +7,8 @@
 	import TabNavigation from '$lib/components/TabNavigation.svelte';
 	import FloatingActionButton from '$lib/components/FloatingActionButton.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import PomodoroTimer from '$lib/components/PomodoroTimer.svelte';
+	import Statistics from '$lib/components/Statistics.svelte';
 
 	import { projects } from '$lib/stores/projects.js';
 	import { currentTab } from '$lib/stores/navigation.js';
@@ -66,6 +68,31 @@
 
 	function handleDeleteTask(projectId: string, taskId: string) {
 		projects.removeTask(projectId, taskId);
+	}
+
+	async function handlePomodoroComplete(projectId: string, taskId: string, minutes: number) {
+		// Update task time
+		await projects.addTaskTime(projectId, taskId, minutes);
+
+		// Create time session record for statistics
+		try {
+			const endedAt = new Date();
+			const startedAt = new Date(endedAt.getTime() - minutes * 60 * 1000);
+
+			await fetch('/api/time-sessions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					taskId,
+					durationMinutes: minutes,
+					startedAt: startedAt.toISOString(),
+					endedAt: endedAt.toISOString(),
+					notes: 'Pomodoro session'
+				})
+			});
+		} catch (error) {
+			console.error('Failed to create time session:', error);
+		}
 	}
 
 	function handleTabChange(tab: TabType) {
@@ -137,16 +164,13 @@
 				</div>
 
 			{:else if $currentTab === 'timer'}
-				<div class="text-center py-12">
-					<h2 class="text-2xl font-semibold text-gray-100 mb-4">Pomodoro Timer</h2>
-					<p class="text-gray-300">Timer functionality coming soon...</p>
-				</div>
+				<PomodoroTimer
+					projects={$projects}
+					onSessionComplete={handlePomodoroComplete}
+				/>
 
 			{:else if $currentTab === 'stats'}
-				<div class="text-center py-12">
-					<h2 class="text-2xl font-semibold text-gray-100 mb-4">Statistics</h2>
-					<p class="text-gray-300">Statistics and analytics coming soon...</p>
-				</div>
+				<Statistics projects={$projects} />
 			{/if}
 		</div>
 	</div>
